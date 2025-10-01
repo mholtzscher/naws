@@ -163,11 +163,77 @@ naws profile my-profile
 # NAWS will auto-detect SSO vs credentials and handle auth
 ```
 
+## Testing with LocalStack
+
+NAWS includes a LocalStack setup for local testing without using real AWS resources.
+
+### Start LocalStack
+
+```bash
+# Start LocalStack with pre-configured resources
+docker-compose up -d
+
+# Wait for initialization to complete (check logs)
+docker-compose logs -f localstack
+```
+
+### Test with LocalStack
+
+```bash
+# Option 1: Use the test script (sets environment variables)
+nu test-localstack.nu
+
+# Option 2: Export environment variables manually
+export AWS_ENDPOINT_URL=http://localhost:4566
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
+export AWS_DEFAULT_REGION=us-east-1
+
+# Then use NAWS normally
+naws s3 list
+naws sqs receive
+naws logs groups
+```
+
+### Pre-configured Test Resources
+
+The LocalStack initialization creates:
+
+**S3 Buckets:**
+- `naws-test-bucket-1` (empty)
+- `naws-test-bucket-2` (empty)
+- `naws-demo-files` (contains sample files in nested folders)
+
+**SQS Queues:**
+- `naws-test-queue` (standard, with 3 test messages)
+- `naws-demo-queue` (standard, with 2 messages)
+- `naws-notifications` (standard, empty)
+- `naws-fifo-queue.fifo` (FIFO queue, empty)
+
+**CloudWatch Logs:**
+- `/aws/lambda/naws-test-function` (with log streams and events)
+- `/aws/ecs/naws-demo-service` (empty)
+- `/application/naws-app` (with log events)
+
+**EventBridge:**
+- Custom event bus: `naws-custom-bus`
+- Event rule: `naws-test-rule`
+
+### Stop LocalStack
+
+```bash
+docker-compose down
+
+# To also remove volumes (reset all data)
+docker-compose down -v
+```
+
 ## Configuration
 
 NAWS respects standard AWS configuration:
 - `AWS_PROFILE` environment variable
 - `AWS_REGION` environment variable  
+- `AWS_ENDPOINT_URL` environment variable (for LocalStack)
 - `~/.aws/config` and `~/.aws/credentials`
 - SSO sessions
 
