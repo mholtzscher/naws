@@ -21,8 +21,8 @@ services:
       # - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY}
 
       # Hostname configuration
-      - HOSTNAME=localhost
-      - HOSTNAME_EXTERNAL=localhost
+      # - HOSTNAME=localhost
+      # - HOSTNAME_EXTERNAL=localhost
     volumes:
       - "./.localstack:/etc/localstack/init/ready.d"
     networks:
