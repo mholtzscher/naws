@@ -13,21 +13,6 @@
 
 use ./shared.nu *
 
-# Private helper to resolve AWS region
-def _resolve_region [] {
-  let env_region = ($env.AWS_REGION? | default "")
-  if not ($env_region | is-empty) {
-    return $env_region
-  }
-  
-  let config_region = (aws configure get region | complete)
-  if $config_region.exit_code == 0 and not ($config_region.stdout | str trim | is-empty) {
-    return ($config_region.stdout | str trim)
-  }
-  
-  "us-east-1"
-}
-
 # Private helper to normalize queue URL/name to full URL
 def _normalize_queue_url [queue_input: string] {
   if ($queue_input | str starts-with "https://") {

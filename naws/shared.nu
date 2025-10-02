@@ -92,6 +92,23 @@ export def --env authenticate [] {
     return 0 
 }
 
+# Helper: Resolve AWS region from environment or config
+# Usage: _resolve_region
+# Returns region string, defaults to us-east-1 if not found
+export def _resolve_region [] {
+  let env_region = ($env.AWS_REGION? | default "")
+  if not ($env_region | is-empty) {
+    return $env_region
+  }
+  
+  let config_region = (aws configure get region | complete)
+  if $config_region.exit_code == 0 and not ($config_region.stdout | str trim | is-empty) {
+    return ($config_region.stdout | str trim)
+  }
+  
+  "us-east-1"
+}
+
 # Helper: Format timestamp from AWS milliseconds to human-readable format
 # Usage: _format_timestamp <timestamp_ms> [format]
 # Returns formatted timestamp string or empty string if timestamp is invalid
