@@ -28,16 +28,6 @@ def _resolve_region [] {
   "us-east-1"
 }
 
-# Private helper to validate AWS CLI availability
-def _validate_aws_cli [] {
-  let check = (aws --version | complete)
-  if $check.exit_code != 0 {
-    log error "AWS CLI not found or not configured"
-    return false
-  }
-  return true
-}
-
 # Private helper to normalize queue URL/name to full URL
 def _normalize_queue_url [queue_input: string] {
   if ($queue_input | str starts-with "https://") {
@@ -88,8 +78,6 @@ def _select_queue [] {
 # List queues
 def list [...args] {
   _require_tool aws
-
-  if not (_validate_aws_cli) { return }
   
   log info "Listing SQS queues..."
   let queues_result = (aws sqs list-queues --output json | complete)
@@ -119,8 +107,6 @@ def list [...args] {
 # Create queue
 def create [...args] {
   _require_tool aws
-
-  if not (_validate_aws_cli) { return }
   
   let queue_name = (input "Enter queue name: " | str trim)
   if ($queue_name | is-empty) {
@@ -157,8 +143,6 @@ def create [...args] {
 def delete [...args] {
   _require_tool aws
   _require_tool fzf
-
-  if not (_validate_aws_cli) { return }
   
   let queue_url = (_select_queue)
   if ($queue_url | is-empty) { return }
@@ -185,8 +169,6 @@ def delete [...args] {
 def purge [...args] {
   _require_tool aws
   _require_tool fzf
-
-  if not (_validate_aws_cli) { return }
   
   let queue_url = (_select_queue)
   if ($queue_url | is-empty) { return }
@@ -213,8 +195,6 @@ def purge [...args] {
 def send [...args] {
   _require_tool aws
   _require_tool fzf
-
-  if not (_validate_aws_cli) { return }
   
   let queue_url = (_select_queue)
   if ($queue_url | is-empty) { return }
@@ -264,8 +244,6 @@ def send [...args] {
 def receive [...args] {
   _require_tool aws
   _require_tool fzf
-
-  if not (_validate_aws_cli) { return }
   
   let queue_url = (_select_queue)
   if ($queue_url | is-empty) { return }
@@ -308,8 +286,6 @@ def receive [...args] {
 def delete_message [...args] {
   _require_tool aws
   _require_tool fzf
-
-  if not (_validate_aws_cli) { return }
   
   let queue_url = (_select_queue)
   if ($queue_url | is-empty) { return }
@@ -336,8 +312,6 @@ def delete_message [...args] {
 def get_attributes [...args] {
   _require_tool aws
   _require_tool fzf
-
-  if not (_validate_aws_cli) { return }
   
   let queue_url = (_select_queue)
   if ($queue_url | is-empty) { return }
@@ -369,8 +343,6 @@ def get_attributes [...args] {
 def set_attributes [...args] {
   _require_tool aws
   _require_tool fzf
-
-  if not (_validate_aws_cli) { return }
   
   let queue_url = (_select_queue)
   if ($queue_url | is-empty) { return }
