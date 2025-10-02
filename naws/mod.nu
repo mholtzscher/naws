@@ -60,7 +60,7 @@ def _naws_domains [] {
 }
 
 # naws ==> Nushell + AWS
-export def --env naws [
+export def --env main [
   domain?: string@"_naws_completions_domains"
   subcmd?: string@"_naws_completions_subcmds"
   ...rest
