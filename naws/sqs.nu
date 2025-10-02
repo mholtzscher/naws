@@ -19,8 +19,8 @@ def _normalize_queue_url [queue_input: string] {
     return $queue_input
   }
   
-  let region = (_resolve_region)
-  let account_id = (aws sts get-caller-identity --query Account --output text | complete)
+  let region = _resolve_region
+  let account_id = aws sts get-caller-identity --query Account --output text | complete
   if $account_id.exit_code != 0 {
     log error "Failed to get AWS account ID"
     return ""
