@@ -31,12 +31,14 @@
 # Dependencies: aws cli, fzf, fd (for file selection), bat (for previews)
 
 # Load submodule implementations first so referenced functions exist for runtime dispatch
+use std/log;
 use ./s3.nu *
 use ./sqs.nu *
 use ./logs.nu *
 use ./batch.nu *
 use ./events.nu *
 use ./shared.nu authenticate
+use ./shared.nu _require_tool
 
 # Version string constant
 const NAWS_VERSION = "0.1.0"
@@ -84,10 +86,10 @@ def --env _naws_dispatch [domain: string, subcmd?: string, ...rest] {
     return
   }
 
-  let sc_list = ($entry.subcmds | where name == $subcmd)
+  let subcommands = ($entry.subcmds | where name == $subcmd)
 
-  if ($sc_list | is-empty) { log error $"Unknown ($domain) command: ($subcmd)"; return }
-  let sc = $sc_list.0
+  if ($subcommands | is-empty) { log error $"Unknown ($domain) command: ($subcmd)"; return }
+  let sc = $subcommands.0
   # Subcommand found - authenticate then run its closure
   authenticate | if $in != 0 { return }
   do $sc.run $rest
@@ -160,6 +162,7 @@ def _naws_show_domain_help [domain: string] {
   print $"Usage: naws ($domain) <command>";
   print $"Example: naws ($domain) ($entry.subcmds.0.name)";
 }
+
 # Check system health and show dependency status
 def _naws_show_health [] {
   print $"(ansi green_bold)naws(ansi reset) v($NAWS_VERSION) - System Health Check"; print "";
@@ -245,43 +248,44 @@ def _naws_print_version [] {
 
 # Change AWS profile interactively
 def --env _naws_change_profile [profile?: string] {
-  # Get available profiles 
+  _require_tool aws
+  _require_tool fzf
+
   let profiles_result = (aws configure list-profiles | complete)
   if $profiles_result.exit_code != 0 {
     log error "Failed to list AWS profiles. Make sure AWS CLI is configured."
-    return
+    return 1
   }
 
   let profiles = ($profiles_result.stdout | lines | where $it != "")
   if ($profiles | is-empty) {
     log error "No AWS profiles found. Configure profiles using 'aws configure --profile <name>'"
-    return
+    return 1
   }
 
-  # If profile specified directly, validate and set it
   if ($profile | is-not-empty) {
     if ($profile not-in $profiles) {
       log error $"Profile '($profile)' not found. Available profiles: ($profiles | str join ', ')"
-      return
+      return 1
     }
     $env.AWS_PROFILE = $profile
-    print $"(ansi green)✓(ansi reset) AWS profile set to: (ansi purple)($profile)(ansi reset)"
-    return
+    log info $"AWS profile set to: ($profile)"
+    return 0
   }
 
-  # Show current profile
   let current_profile = ($env.AWS_PROFILE? | default "default")
-  print $"Current: (ansi purple)($current_profile)(ansi reset)";
+  log info $"Current: ($current_profile)";
   print "";
 
-  let selected_profile = ($profiles | to text | fzf --prompt="Select AWS profile: " --height=10)
+  let selected_profile = ($profiles | str join "\n" | fzf --prompt="Select AWS profile: " --height=10)
   if ($selected_profile | is-empty) {
-    print "No profile selected"
-    return
+    log warning "No profile selected"
+    return 1
   }
 
   let profile_name = ($selected_profile | str trim)
   $env.AWS_PROFILE = $profile_name
-  print $"(ansi green)✓(ansi reset) AWS profile changed to: (ansi purple)($profile_name)(ansi reset)"
+  log info $"AWS profile changed to: ($profile_name)"
+  return 0
 }
 
