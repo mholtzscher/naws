@@ -199,7 +199,7 @@ def logs [...args] {
   if $job_details_result.exit_code != 0 {
     log error $"Failed to get details for job ($job.jobId)"
     log error $job_details_result.stderr
-    continue
+    return
   }
   
   let job_details = ($job_details_result.stdout | from json | get jobs.0)
@@ -211,7 +211,7 @@ def logs [...args] {
   
   if ($log_stream | is-empty) {
     log warning $"No log stream found for job ($job.jobName) - job may not have started yet"
-    continue
+    return 
   }
   
   log info $"Fetching logs from stream: ($log_stream)"
@@ -221,7 +221,7 @@ def logs [...args] {
   if $logs_result.exit_code != 0 {
     log error $"Failed to get logs for job ($job.jobName)"
     log error $logs_result.stderr
-    continue
+    return 
   }
   
   let log_data = ($logs_result.stdout | from json)

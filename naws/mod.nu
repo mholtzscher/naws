@@ -69,15 +69,15 @@ export def --env main [
 ] {
   if ($domain | is-empty) { _naws_show_help; return }
   if $domain == "version" { _naws_print_version; return }
-  if $domain == "health"  { _naws_show_health; return }
-  if $domain == "help"    { _naws_show_help; return }
+  if $domain == "health" { _naws_show_health; return }
+  if $domain == "help" { _naws_show_help; return }
   if $domain == "profile" { _naws_change_profile $subcmd; return }
   _naws_dispatch $domain $subcmd ...$rest
 }
 
 # Route commands to appropriate domain handlers
 def --env _naws_dispatch [domain: string, subcmd?: string, ...rest] {
-  let entry_list = (_naws_domains  | where name == $domain)
+  let entry_list = (_naws_domains | where name == $domain)
   if ($entry_list | is-empty) { log error $"Unknown domain: ($domain)"; return }
   let entry = $entry_list.0
 
@@ -97,14 +97,14 @@ def --env _naws_dispatch [domain: string, subcmd?: string, ...rest] {
 
 # Completion helper for domains and meta commands
 def _naws_completions_domains [] {
-  let domain_completions = _naws_domains | each { |d| 
-    { value: $d.name, description: $d.desc } 
+  let domain_completions = _naws_domains | each {|d|
+    {value: $d.name description: $d.desc}
   }
   let meta_completions = [
-    { value: "help", description: "Show help" }
-    { value: "version", description: "Show version" }
-    { value: "health", description: "Check system health and dependencies" }
-    { value: "profile", description: "Change AWS profile" }
+    {value: "help" description: "Show help"}
+    {value: "version" description: "Show version"}
+    {value: "health" description: "Check system health and dependencies"}
+    {value: "profile" description: "Change AWS profile"}
   ]
   $domain_completions | append $meta_completions
 }
@@ -112,11 +112,11 @@ def _naws_completions_domains [] {
 # Completion helper for subcommands based on selected domain
 export def _naws_completions_subcmds [context: string] {
   let dom = ($context | split words | get 1)
-  _naws_domains 
-  | where name == $dom 
-  | get 0 
-  | get subcmds 
-  | each { |cmd| { value: $cmd.name, description: $cmd.desc } }
+  _naws_domains
+  | where name == $dom
+  | get 0
+  | get subcmds
+  | each {|cmd| {value: $cmd.name description: $cmd.desc} }
 }
 
 # Display main help with domains overview and usage
@@ -126,11 +126,11 @@ def _naws_show_help [] {
   print "Features fuzzy search selection, batch operations, guardrails,";
   print "and human-readable output formatting for common AWS tasks."; print "";
   print "Domains:";
-  _naws_domains | each { |d| 
+  _naws_domains | each {|d|
     let padded_name = ($d.name | fill --alignment left --width $NAWS_NAME_PADDING)
-    print $"  (ansi purple)($padded_name)(ansi reset) ($d.desc)" 
+    print $"  (ansi purple)($padded_name)(ansi reset) ($d.desc)"
   }
-  print ""; 
+  print "";
   print "Meta:";
   let version_padded = ("version" | fill --alignment left --width $NAWS_NAME_PADDING)
   let help_padded = ("help" | fill --alignment left --width $NAWS_NAME_PADDING)
@@ -154,9 +154,9 @@ def _naws_show_domain_help [domain: string] {
 
   print $"(ansi green_bold)naws(ansi reset) ($domain) - ($entry.desc)"; print "";
   print "Available commands:";
-  $entry.subcmds | each { |s| 
+  $entry.subcmds | each {|s|
     let padded_name = ($s.name | fill --alignment left --width $NAWS_NAME_PADDING)
-    print $"  (ansi purple)($padded_name)(ansi reset) ($s.desc)" 
+    print $"  (ansi purple)($padded_name)(ansi reset) ($s.desc)"
   }
   print "";
   print $"Usage: naws ($domain) <command>";
@@ -166,15 +166,15 @@ def _naws_show_domain_help [domain: string] {
 # Check system health and show dependency status
 def _naws_show_health [] {
   print $"(ansi green_bold)naws(ansi reset) v($NAWS_VERSION) - System Health Check"; print "";
-  
+
   # Show current Nushell version
   print $"(ansi default_bold)Nushell:(ansi reset) (version | get version)";
   print "";
-  
+
   # Required tools check
-  let required_tools = ["aws", "fzf", "fd", "bat"]
+  let required_tools = ["aws" "fzf" "fd" "bat"]
   print $"(ansi default_bold)Required Dependencies:(ansi reset)";
-  
+
   mut all_ok = true
   for tool in $required_tools {
     let check = (^which $tool | complete)
@@ -187,9 +187,9 @@ def _naws_show_health [] {
       $all_ok = false
     }
   }
-  
+
   print "";
-  
+
   # AWS CLI specific checks if available
   let aws_check = (^which aws | complete)
   if $aws_check.exit_code == 0 {
@@ -199,7 +199,7 @@ def _naws_show_health [] {
       print $"(ansi default_bold)AWS CLI:(ansi reset) ($aws_version.stdout | str trim)";
     }
     print "";
-    
+
     # AWS profiles
     print $"(ansi default_bold)AWS Profiles:(ansi reset)";
     let profiles_result = (aws configure list-profiles | complete)
@@ -216,9 +216,9 @@ def _naws_show_health [] {
     } else {
       print $"  (ansi red)Failed to list profiles(ansi reset)";
     }
-    
+
     print "";
-    
+
     # Current AWS identity
     let identity_result = (aws sts get-caller-identity --output json | complete)
     if $identity_result.exit_code == 0 {
@@ -232,7 +232,7 @@ def _naws_show_health [] {
   } else {
     print $"(ansi red)AWS CLI not available - cannot check AWS configuration(ansi reset)";
   }
-  
+
   print "";
   if $all_ok {
     print $"(ansi green_bold)✓ All dependencies available(ansi reset)";
@@ -288,4 +288,3 @@ def --env _naws_change_profile [profile?: string] {
   log info $"AWS profile changed to: ($profile_name)"
   return 0
 }
-
