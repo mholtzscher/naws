@@ -270,7 +270,7 @@ def details [...args] {
   if $job_details_result.exit_code != 0 {
     log error $"Failed to get details for job ($job.jobId)"
     log error $job_details_result.stderr
-    continue
+    return
   }
   
   let job_details = ($job_details_result.stdout | from json | get jobs.0)
